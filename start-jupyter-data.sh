@@ -1,38 +1,46 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-# Start JupyterLab while storing runtime/temp files on /mnt/data.
+# Start JupyterLab using /mnt/data for writable runtime, cache,
+# configuration, and temporary files.
 #
 # Usage:
-#   ./start-jupyter-data.sh [NOTEBOOK_DIRECTORY]
-#
-# Example:
+#   ./start-jupyter-data.sh
 #   ./start-jupyter-data.sh /mnt/data/practical2
+#
+# Default Jupyter root:
+#   /mnt/data
+#
+# Per-user working directory:
+#   /mnt/data/<username>/jupyter
 
 JUPYTER_BIN="${JUPYTER_BIN:-/usr/local/share/course/bin/jupyter-lab}"
 NOTEBOOK_DIR="${1:-/mnt/data}"
 BASE="${JUPYTER_BASE:-/mnt/data/${USER}/jupyter}"
 
+# Ensure newly created user-specific files are private.
+umask 077
+
 pause_on_exit() {
     status=$?
+
     echo
     if (( status == 0 )); then
         echo "JupyterLab stopped."
     else
-        echo "JupyterLab exited with status ${status}."
+        echo "JupyterLab exited with status: $status"
     fi
 
     if [[ -t 0 ]]; then
         read -r -p "Press Enter to close this terminal..." || true
     fi
 }
+
 trap pause_on_exit EXIT
 
 if [[ ! -x "$JUPYTER_BIN" ]]; then
-    echo "Error: JupyterLab executable not found at:"
+    echo "Error: JupyterLab executable was not found or is not executable:"
     echo "  $JUPYTER_BIN"
-    echo
-    echo "Set JUPYTER_BIN to the correct path and try again."
     exit 1
 fi
 
@@ -42,22 +50,29 @@ if [[ ! -d "$NOTEBOOK_DIR" ]]; then
     exit 1
 fi
 
-if [[ ! -r "$NOTEBOOK_DIR" ]]; then
-    echo "Error: notebook directory is not readable:"
+if [[ ! -r "$NOTEBOOK_DIR" || ! -x "$NOTEBOOK_DIR" ]]; then
+    echo "Error: notebook directory is not accessible:"
     echo "  $NOTEBOOK_DIR"
     exit 1
 fi
 
+# Create separate runtime directories for the current user.
 mkdir -p \
     "$BASE/runtime" \
     "$BASE/tmp" \
-    "$BASE/notebooks" \
     "$BASE/config" \
     "$BASE/data" \
     "$BASE/cache" \
     "$BASE/ipython"
 
-chmod 700 "$BASE/runtime" "$BASE/tmp"
+chmod 700 \
+    "$BASE" \
+    "$BASE/runtime" \
+    "$BASE/tmp" \
+    "$BASE/config" \
+    "$BASE/data" \
+    "$BASE/cache" \
+    "$BASE/ipython"
 
 export JUPYTER_RUNTIME_DIR="$BASE/runtime"
 export JUPYTER_CONFIG_DIR="$BASE/config"
@@ -67,11 +82,18 @@ export IPYTHONDIR="$BASE/ipython"
 export TMPDIR="$BASE/tmp"
 
 echo "Starting JupyterLab"
-echo "Notebook directory: $NOTEBOOK_DIR"
-echo "Runtime directory:  $JUPYTER_RUNTIME_DIR"
+echo
+echo "User:                $USER"
+echo "Jupyter root:        $NOTEBOOK_DIR"
+echo "User data directory: $BASE"
+echo "Runtime directory:   $JUPYTER_RUNTIME_DIR"
+echo "Temporary directory: $TMPDIR"
 echo
 echo "Keep this terminal open."
-echo "Copy the http://localhost:... URL into your browser."
+echo "Copy the displayed http://localhost:... URL into your browser."
+echo
+echo "Linux permissions still control which directories can be opened"
+echo "or modified under $NOTEBOOK_DIR."
 echo
 
 "$JUPYTER_BIN" \
