@@ -5,8 +5,8 @@ set -Eeuo pipefail
 # configuration, plotting cache, and temporary files.
 #
 # Usage:
-#   ./start-jupyter-data-updated.sh
-#   ./start-jupyter-data-updated.sh /mnt/data/practical2
+#   ./start-jupyter-data.sh
+#   ./start-jupyter-data.sh /mnt/data/practical2
 #
 # Default Jupyter root:
 #   /mnt/data
