@@ -2,11 +2,11 @@
 set -Eeuo pipefail
 
 # Start JupyterLab using /mnt/data for writable runtime, cache,
-# configuration, and temporary files.
+# configuration, plotting cache, and temporary files.
 #
 # Usage:
-#   ./start-jupyter-data.sh
-#   ./start-jupyter-data.sh /mnt/data/practical2
+#   ./start-jupyter-data-updated.sh
+#   ./start-jupyter-data-updated.sh /mnt/data/practical2
 #
 # Default Jupyter root:
 #   /mnt/data
@@ -56,14 +56,15 @@ if [[ ! -r "$NOTEBOOK_DIR" || ! -x "$NOTEBOOK_DIR" ]]; then
     exit 1
 fi
 
-# Create separate runtime directories for the current user.
+# Create separate writable directories for the current user.
 mkdir -p \
     "$BASE/runtime" \
     "$BASE/tmp" \
     "$BASE/config" \
     "$BASE/data" \
     "$BASE/cache" \
-    "$BASE/ipython"
+    "$BASE/ipython" \
+    "$BASE/matplotlib"
 
 chmod 700 \
     "$BASE" \
@@ -72,22 +73,31 @@ chmod 700 \
     "$BASE/config" \
     "$BASE/data" \
     "$BASE/cache" \
-    "$BASE/ipython"
+    "$BASE/ipython" \
+    "$BASE/matplotlib"
 
+# Redirect Jupyter, IPython, Matplotlib, XDG, and temporary files
+# away from the full root filesystem.
 export JUPYTER_RUNTIME_DIR="$BASE/runtime"
 export JUPYTER_CONFIG_DIR="$BASE/config"
 export JUPYTER_DATA_DIR="$BASE/data"
+
+export XDG_CONFIG_HOME="$BASE/config"
+export XDG_DATA_HOME="$BASE/data"
 export XDG_CACHE_HOME="$BASE/cache"
+
+export MPLCONFIGDIR="$BASE/matplotlib"
 export IPYTHONDIR="$BASE/ipython"
 export TMPDIR="$BASE/tmp"
 
 echo "Starting JupyterLab"
 echo
-echo "User:                $USER"
-echo "Jupyter root:        $NOTEBOOK_DIR"
-echo "User data directory: $BASE"
-echo "Runtime directory:   $JUPYTER_RUNTIME_DIR"
-echo "Temporary directory: $TMPDIR"
+echo "User:                 $USER"
+echo "Jupyter root:         $NOTEBOOK_DIR"
+echo "User data directory:  $BASE"
+echo "Runtime directory:    $JUPYTER_RUNTIME_DIR"
+echo "Temporary directory:  $TMPDIR"
+echo "Matplotlib directory: $MPLCONFIGDIR"
 echo
 echo "Keep this terminal open."
 echo "Copy the displayed http://localhost:... URL into your browser."
