@@ -10,7 +10,7 @@ set -Eeuo pipefail
 #   ./start-jupyter-data.sh /mnt/data/practical2
 
 JUPYTER_BIN="${JUPYTER_BIN:-/usr/local/share/course/bin/jupyter-lab}"
-NOTEBOOK_DIR="${1:-/mnt/data/practical2}"
+NOTEBOOK_DIR="${1:-/mnt/data}"
 BASE="${JUPYTER_BASE:-/mnt/data/${USER}/jupyter}"
 
 pause_on_exit() {
